@@ -22,13 +22,14 @@ h2 {
 }
 
 li {
-  text-align: center;
+  font-size: 150%;
+  text-align: justify;
   margin: 5px 0px;
 }
 
 ul {
   list-style-type: none;
-  padding-inline-start: 0px;
+  padding-inline-start: 50px;
 }
 
 form {

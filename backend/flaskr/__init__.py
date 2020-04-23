@@ -1,3 +1,5 @@
+"""BACKEND FOR TRIVIA API."""
+
 import os
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -9,21 +11,24 @@ from models import setup_db, Question, Category
 
 QUESTIONS_PER_PAGE = 10
 
+
 def paginate_questions(request, selection):
-  page = request.args.get('page', 1, type=int)
-  start =  (page - 1) * QUESTIONS_PER_PAGE
-  end = start + QUESTIONS_PER_PAGE
+    """BREAK UP RESULTS INTO PAGES."""
+    page = request.args.get('page', 1, type=int)
+    start = (page - 1) * QUESTIONS_PER_PAGE
+    end = start + QUESTIONS_PER_PAGE
 
-  questions = [question.format() for question in selection]
-  current_questions = questions[start:end]
+    questions = [question.format() for question in selection]
+    current_questions = questions[start:end]
 
-  return current_questions
+    return current_questions
+
 
 def create_app(test_config=None):
-    # create and configure the app
+    """CREATE THE APP."""
     app = Flask(__name__)
     setup_db(app)
-    CORS(app, resources={r"/api/*" : {'origins':'*'}})
+    CORS(app, resources={r"/api/*" : {'origins': '*'}})
 
     @app.after_request
     def after_request(response):
@@ -34,7 +39,7 @@ def create_app(test_config=None):
     @app.route('/categories', methods=['GET'])
     def get_categories():
         categories = Category.query.all()
-        categories_list = {category.id:category.type for category in categories}
+        categories_list = {category.id: category.type for category in categories}
 
         if len(categories) == 0:
             abort(404)
@@ -55,12 +60,12 @@ def create_app(test_config=None):
 
         try:
             categories = Category.query.all()
-            categories_list = {category.id:category.type for category in categories}
+            categories_list = {category.id: category.type for category in categories}
 
             return jsonify({
                 'success': True,
                 'questions': current_questions,
-                'total_questions':len(Question.query.all()),
+                'total_questions': len(Question.query.all()),
                 'categories': categories_list,
                 'current_category': None
             })
@@ -84,7 +89,7 @@ def create_app(test_config=None):
                 'success': True,
                 'deleted': question_id,
                 'questions': current_questions,
-                'total_questions':len(Question.query.all())
+                'total_questions': len(Question.query.all())
             })
 
         except:
@@ -112,7 +117,7 @@ def create_app(test_config=None):
                 'created': question.id,
                 'question_created': question.question,
                 'questions': current_questions,
-                'total_questions':len(Question.query.all()),
+                'total_questions': len(Question.query.all()),
                 'current_category': None
             })
         except:
@@ -121,21 +126,21 @@ def create_app(test_config=None):
 
     @app.route('/questions/searchTerm', methods=['POST'])
     def search():
-            body = request.get_json()
-            search = body.get('searchTerm', None)
-            try:
-                selection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(search)))
-                current_questions = paginate_questions(request, selection)
+        body = request.get_json()
+        search = body.get('searchTerm', None)
+        try:
+            selection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(search)))
+            current_questions = paginate_questions(request, selection)
 
-                return jsonify({
-                    'success': True,
-                    'questions': current_questions,
-                    'total_questions':len(Question.query.all()),
-                    'current_category': None
-                })
-            except:
-                print(sys.exc_info())
-                abort(422)
+            return jsonify({
+                'success': True,
+                'questions': current_questions,
+                'total_questions': len(Question.query.all()),
+                'current_category': None
+            })
+        except:
+            print(sys.exc_info())
+            abort(422)
 
     @app.route('/categories/<int:category_id>/questions', methods=['GET'])
     def questions_by_category(category_id):
@@ -146,23 +151,12 @@ def create_app(test_config=None):
             return jsonify({
                 'success': True,
                 'questions': current_questions,
-                'total_questions':len(Question.query.all()),
+                'total_questions': len(Question.query.all()),
                 'current_category': category.type
             })
         except:
             print(sys.exc_info())
             abort(422)
-    '''
-    @TODO:
-    Create a POST endpoint to get questions to play the quiz.
-    This endpoint should take category and previous question parameters
-    and return a random questions within the given category,
-    if provided, and that is not one of the previous questions.
-
-    TEST: In the "Play" tab, after a user selects "All" or a category,
-    one question at a time is displayed, the user is allowed to answer
-    and shown whether they were correct or not.
-    '''
 
     @app.route('/quizzes', methods=['POST'])
     def play_game():
@@ -175,7 +169,7 @@ def create_app(test_config=None):
             if quiz_category['id'] == 0:
                 questions = Question.query.filter(Question.id.notin_(previous_questions)).all()
             else:
-                questions = Question.query.filter_by(category=quiz_category['id'] ).filter(Question.id.notin_(previous_questions)).all()
+                questions = Question.query.filter_by(category=quiz_category['id']).filter(Question.id.notin_(previous_questions)).all()
             if len(questions) > 0:
                 next_question = random.choice(questions).format()
                 return jsonify({
