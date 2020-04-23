@@ -131,7 +131,6 @@ def create_app(test_config=None):
         try:
             selection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(search)))
             current_questions = paginate_questions(request, selection)
-
             return jsonify({
                 'success': True,
                 'questions': current_questions,
@@ -156,7 +155,7 @@ def create_app(test_config=None):
             })
         except:
             print(sys.exc_info())
-            abort(422)
+            abort(400)
 
     @app.route('/quizzes', methods=['POST'])
     def play_game():
