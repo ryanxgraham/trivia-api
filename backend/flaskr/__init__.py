@@ -3,6 +3,7 @@ from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
+import sys
 
 from models import setup_db, Question, Category
 
@@ -30,12 +31,10 @@ def create_app(test_config=None):
         response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS')
         return response
 
-    @app.route('/categories')
+    @app.route('/categories', methods=['GET'])
     def get_categories():
-        categories = Category.query.order_by(Category.id).all()
-        categories_list = {}
-        for category in categories_list:
-            categories_list[category.id] = category.type
+        categories = Category.query.all()
+        categories_list = {category.id:category.type for category in categories}
 
         if len(categories) == 0:
             abort(404)
@@ -46,35 +45,31 @@ def create_app(test_config=None):
             'total_categories': len(Category.query.all())
         })
 
-    @app.route('/questions')
+    @app.route('/questions', methods=['GET'])
     def get_questions():
         selection = Question.query.order_by(Question.id).all()
         current_questions = paginate_questions(request, selection)
-        total_questions = len(selection)
 
-        categories = Category.query.all()
-        categories_list = {}
-        for category in categories:
-            categories_list[category.id] = category.type
+        if (len(current_questions) == 0):
+            abort(404)
 
-            if (len(current_questions) == 0):
-                abort(404)
+        try:
+            categories = Category.query.all()
+            categories_list = {category.id:category.type for category in categories}
 
-        return jsonify({
-            'success': True,
-            'questions': current_questions,
-            'total_questions':total_questions,
-            'categories': categories_list
-        })
-    '''
-    @TODO:
-    Create an endpoint to DELETE question using a question ID.
+            return jsonify({
+                'success': True,
+                'questions': current_questions,
+                'total_questions':len(Question.query.all()),
+                'categories': categories_list,
+                'current_category': None
+            })
+        except:
+            print(sys.exc_info())
+            abort(422)
 
-    TEST: When you click the trash icon next to a question, the question will be removed.
-    This removal will persist in the database and when you refresh the page.
-    '''
-    @app.route('/questions/<question_id>/', method=['DELETE'])
-    def delete_question():
+    @app.route('/questions/<question_id>', methods=['DELETE'])
+    def delete_question(question_id):
         try:
             question = Question.query.filter(Question.id == question_id).one_or_none()
 
@@ -89,25 +84,41 @@ def create_app(test_config=None):
                 'success': True,
                 'deleted': question_id,
                 'questions': current_questions,
-                'total_questions':total_questions,
-                'categories': categories_list
+                'total_questions':len(Question.query.all())
             })
-            
+
         except:
+            print(sys.exc_info())
             abort(422)
 
+    @app.route('/questions/add', methods=['POST'])
+    def create_question():
+        body = request.get_json()
 
+        new_question = body.get('question', None)
+        new_answer = body.get('answer', None)
+        new_category = body.get('category', None)
+        new_difficulty = body.get('difficulty', None)
+        search = body.get('search', None)
 
-    '''
-    @TODO:
-    Create an endpoint to POST a new question,
-    which will require the question and answer text,
-    category, and difficulty score.
+            try:
+                question = Question(question=new_question, answer=new_answer, category=new_category, difficulty=new_difficulty)
+                question.insert()
 
-    TEST: When you submit a question on the "Add" tab,
-    the form will clear and the question will appear at the end of the last page
-    of the questions list in the "List" tab.
-    '''
+                selection = Question.query.order_by(Question.id).all()
+                current_questions = paginate_questions(request, selection)
+
+                return jsonify({
+                    'success': True,
+                    'created': question.id,
+                    'question_created': question.question,
+                    'questions': current_questions,
+                    'total_questions':len(Question.query.all()),
+                    'current_category': None
+                })
+            except:
+                print(sys.exc_info())
+                abort(422)
 
     '''
     @TODO:
