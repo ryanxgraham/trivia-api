@@ -99,19 +99,36 @@ def create_app(test_config=None):
         new_answer = body.get('answer', None)
         new_category = body.get('category', None)
         new_difficulty = body.get('difficulty', None)
-        search = body.get('search', None)
 
+        try:
+            question = Question(question=new_question, answer=new_answer, category=new_category, difficulty=new_difficulty)
+            question.insert()
+
+            selection = Question.query.order_by(Question.id).all()
+            current_questions = paginate_questions(request, selection)
+
+            return jsonify({
+                'success': True,
+                'created': question.id,
+                'question_created': question.question,
+                'questions': current_questions,
+                'total_questions':len(Question.query.all()),
+                'current_category': None
+            })
+        except:
+            print(sys.exc_info())
+            abort(422)
+
+    @app.route('/questions/searchTerm', methods=['POST'])
+    def search():
+            body = request.get_json()
+            search = body.get('searchTerm', None)
             try:
-                question = Question(question=new_question, answer=new_answer, category=new_category, difficulty=new_difficulty)
-                question.insert()
-
-                selection = Question.query.order_by(Question.id).all()
+                selection = Question.query.order_by(Question.id).filter(Question.question.ilike('%{}%'.format(search)))
                 current_questions = paginate_questions(request, selection)
 
                 return jsonify({
                     'success': True,
-                    'created': question.id,
-                    'question_created': question.question,
                     'questions': current_questions,
                     'total_questions':len(Question.query.all()),
                     'current_category': None
@@ -119,18 +136,6 @@ def create_app(test_config=None):
             except:
                 print(sys.exc_info())
                 abort(422)
-
-    '''
-    @TODO:
-    Create a POST endpoint to get questions based on a search term.
-    It should return any questions for whom the search term
-    is a substring of the question.
-
-    TEST: Search by any phrase. The questions list will update to include
-    only question that include that string within their question.
-    Try using the word "title" to start.
-    '''
-
     '''
     @TODO:
     Create a GET endpoint to get questions based on category.
