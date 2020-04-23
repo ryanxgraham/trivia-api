@@ -164,6 +164,32 @@ def create_app(test_config=None):
     and shown whether they were correct or not.
     '''
 
+    @app.route('/quizzes', methods=['POST'])
+    def play_game():
+        body = request.get_json()
+        previous_questions = body['previous_questions']
+        quiz_category = body['quiz_category']
+        if ((previous_questions) is None or (quiz_category is None)):
+            abort(400)
+        try:
+            if quiz_category['id'] == 0:
+                questions = Question.query.filter(Question.id.notin_(previous_questions)).all()
+            else:
+                questions = Question.query.filter_by(category=quiz_category['id'] ).filter(Question.id.notin_(previous_questions)).all()
+            if len(questions) > 0:
+                next_question = random.choice(questions).format()
+                return jsonify({
+                    'success': True,
+                    'question': next_question
+                })
+            else:
+                return jsonify({
+                    'success': True
+                })
+        except:
+            print(sys.exc_info())
+            abort(422)
+
     @app.errorhandler(404)
     def not_found(error):
         return jsonify({
