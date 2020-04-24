@@ -498,5 +498,7 @@ The API will return three types of errors:
 
 ## Authors
 
-Ryan Graham (README, API (`__init__.py`), test suite (`test_flaskr.py`)
-Starter code provide by Udacity.
+
+* **Ryan Graham** - [Github](https://github.com/ryanxgraham) (README, API (`__init__.py`), test suite (`test_flaskr.py`))
+
+* **Starter code provide by Udacity**
